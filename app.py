@@ -1,10 +1,10 @@
-from flask import Flask, render_template_string, request, jsonify
+import os
 import re
-import math
+from flask import Flask, render_template_string, request, jsonify
 
 app = Flask(__name__)
 
-# Front-End Studio Layout (HTML/CSS/JS)
+# Studio HTML Interface
 STUDIO_HTML = """
 <!DOCTYPE html>
 <html lang="ur" dir="rtl">
@@ -40,9 +40,8 @@ STUDIO_HTML = """
         </div>
     </header>
 
-    <!-- Studio Main Workspace -->
+    <!-- Main Workspace -->
     <main class="max-w-4xl mx-auto px-4 py-10 w-full flex-grow">
-        
         <div class="text-center mb-8">
             <h2 class="text-2xl md:text-4xl font-extrabold mb-3 urdu-font leading-relaxed">
                 اردو اور انگلش AI ڈٹیکٹر اسٹوڈیو
@@ -52,7 +51,6 @@ STUDIO_HTML = """
             </p>
         </div>
 
-        <!-- Input Box -->
         <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 glow mb-8">
             <textarea id="userInput" rows="7" dir="auto"
                 class="w-full bg-slate-950/70 border border-slate-800 rounded-xl p-4 text-slate-200 focus:outline-none focus:border-teal-500 transition-all text-base resize-none"
@@ -72,14 +70,12 @@ STUDIO_HTML = """
             </div>
         </div>
 
-        <!-- Dashboard Results (Initially Hidden) -->
         <div id="resultBox" class="hidden bg-slate-900/90 border border-slate-800 rounded-2xl p-6 glow">
             <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-6 text-center border-b border-slate-800 pb-3">
                 📊 NLP Analysis Studio Dashboard
             </h3>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center mb-6">
-                <!-- AI Gauge Card -->
                 <div class="bg-slate-950/60 border border-slate-800 p-6 rounded-xl text-center">
                     <div class="text-xs text-slate-400 uppercase tracking-widest">AI Probability Score</div>
                     <div id="scoreText" class="text-5xl font-extrabold text-teal-400 my-2">0%</div>
@@ -88,7 +84,6 @@ STUDIO_HTML = """
                     </div>
                 </div>
 
-                <!-- Verdict Box -->
                 <div class="bg-slate-950/60 border border-slate-800 p-6 rounded-xl text-center">
                     <div class="text-xs text-slate-400 uppercase tracking-widest mb-2">Mr. Bill's Verdict</div>
                     <div id="verdictEmoji" class="text-4xl mb-2">🤔</div>
@@ -96,7 +91,6 @@ STUDIO_HTML = """
                 </div>
             </div>
 
-            <!-- Deep Metrics -->
             <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <div class="bg-slate-950 border border-slate-800/60 p-3 rounded-lg text-center">
                     <span class="text-xs text-slate-400 block">Perplexity Score</span>
@@ -112,14 +106,12 @@ STUDIO_HTML = """
                 </div>
             </div>
         </div>
-
     </main>
 
     <footer class="text-center py-4 border-t border-slate-800 text-xs text-slate-500">
         Urdu AI Detector Studio &copy; 2026 | Built by Mr. Bill
     </footer>
 
-    <!-- Web Audio API Sound Generator & Frontend Engine -->
     <script>
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playBeep(freq, type = 'sine', duration = 0.03) {
@@ -159,7 +151,6 @@ STUDIO_HTML = """
             runBtn.disabled = true;
             runBtn.innerText = "⏳ Processing Backend...";
 
-            // Send request to Python backend API
             const response = await fetch('/analyze', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -167,10 +158,8 @@ STUDIO_HTML = """
             });
 
             const data = await response.json();
-            
             document.getElementById('resultBox').classList.remove('hidden');
             
-            // Sound & Animation Loop
             let current = 0;
             const interval = setInterval(() => {
                 current++;
@@ -196,29 +185,25 @@ STUDIO_HTML = """
 </html>
 """
 
-# Backend NLP Logic
 @app.route('/')
 def home():
     return render_template_string(STUDIO_HTML)
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
-    data = request.json
+    data = request.json or {}
     text = data.get('text', '')
     
     words = re.findall(r'\w+', text)
-    sentences = re.split(r'[.!?۔]+', text)
-    sentences = [s for s in sentences if s.strip()]
+    sentences = [s for s in re.split(r'[.!?۔]+', text) if s.strip()]
     
     num_words = len(words) or 1
     num_sentences = len(sentences) or 1
     
-    # NLP Calculations
     avg_sentence_len = num_words / num_sentences
     ai_phrases = ['furthermore', 'moreover', 'in conclusion', 'delve', 'tapestry', 'misaal ke taur par', 'khulasa', 'nateeja', 'albatta']
     ai_matches = sum(1 for w in words if w.lower() in ai_phrases)
     
-    # Perplexity & Burstiness Scores
     perplexity = round(min(100, max(10, (num_words / (ai_matches + 1)) * 1.5)), 1)
     burstiness = round(min(1.0, max(0.1, (avg_sentence_len / 15))), 2)
     
@@ -247,4 +232,5 @@ def analyze():
     })
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
